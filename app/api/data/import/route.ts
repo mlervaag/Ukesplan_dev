@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { dinners, ingredients, weekPlans, weekPlanDays, shoppingListItems, eventLog } from '@/lib/db/schema';
+import { dinners, ingredients, weekPlans, weekPlanDays, shoppingListItems, todoTemplates, todos, eventLog } from '@/lib/db/schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,10 +14,10 @@ export async function POST(request: Request) {
     try {
         const data = await request.json();
 
-        // 1. Schema Version Check (accept 1 or 2 for backwards compatibility)
-        if (data.schemaVersion !== 1 && data.schemaVersion !== 2) {
+        // 1. Schema Version Check (accept 1, 2 or 3 for backwards compatibility)
+        if (![1, 2, 3].includes(data.schemaVersion)) {
             return NextResponse.json({
-                error: 'Ugyldig filformat eller versjon. Kun versjon 1 eller 2 støttes.'
+                error: 'Ugyldig filformat eller versjon. Kun versjon 1, 2 eller 3 støttes.'
             }, { status: 400 });
         }
 
@@ -28,11 +28,14 @@ export async function POST(request: Request) {
             { key: 'weekPlans', uuidFields: ['id'] },
             { key: 'weekPlanDays', uuidFields: ['id', 'weekPlanId', 'dinnerId'] },
             { key: 'shoppingListItems', uuidFields: ['id'] },
+            { key: 'todoTemplates', uuidFields: ['id'], optional: true },
+            { key: 'todos', uuidFields: ['id', 'weekPlanDayId', 'templateId'], optional: true },
             { key: 'eventLog', uuidFields: ['id'] }
         ];
 
         for (const table of tables) {
             const rows = data[table.key];
+            if (!rows && (table as any).optional) continue;
             if (!Array.isArray(rows)) {
                 return NextResponse.json({
                     error: `Mangler tabell: ${table.key}`
@@ -54,11 +57,13 @@ export async function POST(request: Request) {
 
         // 3. Transactional Import
         await db.transaction(async (tx) => {
-            // A. Wipe everything first
+            // A. Wipe everything first (order matters for FKs)
+            await tx.delete(todos);
             await tx.delete(ingredients);
             await tx.delete(weekPlanDays);
             await tx.delete(weekPlans);
             await tx.delete(dinners);
+            await tx.delete(todoTemplates);
             await tx.delete(shoppingListItems);
             await tx.delete(eventLog);
 
@@ -68,6 +73,13 @@ export async function POST(request: Request) {
             if (data.ingredients.length > 0) await tx.insert(ingredients).values(data.ingredients);
             if (data.weekPlans.length > 0) await tx.insert(weekPlans).values(data.weekPlans);
             if (data.weekPlanDays.length > 0) await tx.insert(weekPlanDays).values(data.weekPlanDays);
+
+            const todoTemplatesData = data.todoTemplates || [];
+            if (todoTemplatesData.length > 0) await tx.insert(todoTemplates).values(todoTemplatesData);
+
+            const todosData = data.todos || [];
+            if (todosData.length > 0) await tx.insert(todos).values(todosData);
+
             if (data.shoppingListItems.length > 0) await tx.insert(shoppingListItems).values(data.shoppingListItems);
             if (data.eventLog && data.eventLog.length > 0) await tx.insert(eventLog).values(data.eventLog);
 

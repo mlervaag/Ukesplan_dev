@@ -94,6 +94,7 @@ export const todos = pgTable('todos', {
     responsible: text('responsible').notNull(),           // 'he' | 'she' | 'both'
     completed: boolean('completed').default(false),
     position: integer('position').notNull().default(0),  // for ordering within day
+    hidden: boolean('hidden').default(false),
     source: text('source').notNull().default('adhoc'),   // 'adhoc' | 'recurring'
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),

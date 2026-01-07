@@ -56,16 +56,16 @@ export function TodoListItem({ todo, onUpdate }: TodoListItemProps) {
         }
     };
 
-    const responsibleLabel = {
-        he: 'H',
-        she: 'U',
-        both: 'B'
-    }[todo.responsible];
-
     const responsibleColor = {
         he: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
         she: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
         both: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+    }[todo.responsible];
+
+    const responsibleLetter = {
+        he: 'M',
+        she: 'N',
+        both: 'B'
     }[todo.responsible];
 
     return (
@@ -112,7 +112,7 @@ export function TodoListItem({ todo, onUpdate }: TodoListItemProps) {
                         "w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-bold shadow-sm",
                         responsibleColor
                     )}>
-                        {responsibleLabel}
+                        {responsibleLetter}
                     </span>
 
                     {todo.source === 'adhoc' && !todo.completed && (

@@ -7,9 +7,11 @@ import { toastBus } from '@/lib/utils/toast';
 
 interface TodoListActionsProps {
     onCopy: () => Promise<void>;
+    onClear: () => Promise<void>;
+    hasActiveTodos: boolean;
 }
 
-export function TodoListActions({ onCopy }: TodoListActionsProps) {
+export function TodoListActions({ onCopy, onClear, hasActiveTodos }: TodoListActionsProps) {
     const [isCopying, setIsCopying] = useState(false);
     const [isSending, setIsSending] = useState(false);
 
@@ -33,15 +35,25 @@ export function TodoListActions({ onCopy }: TodoListActionsProps) {
     };
 
     return (
-        <div className="flex flex-col gap-3 w-full pt-4 border-t">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1">Kopier til Påminnelser</h3>
+        <div className="flex flex-col gap-4 w-full pt-6 border-t mt-4">
+            <div className="flex items-center justify-between px-1">
+                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Handlinger</h3>
+                {hasActiveTodos && (
+                    <button
+                        onClick={onClear}
+                        className="text-xs font-semibold text-destructive hover:underline transition-all"
+                    >
+                        Tøm liste
+                    </button>
+                )}
+            </div>
 
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Button
                     variant="primary"
-                    className="w-full gap-2 h-12"
+                    className="w-full gap-2 h-12 shadow-sm"
                     onClick={handleCopy}
-                    disabled={isCopying}
+                    disabled={isCopying || !hasActiveTodos}
                 >
                     {isCopying ? <Loader2 size={18} className="animate-spin" /> : <Copy size={18} />}
                     <span>Kopier liste</span>
@@ -49,19 +61,19 @@ export function TodoListActions({ onCopy }: TodoListActionsProps) {
 
                 <Button
                     variant="outline"
-                    className="w-full gap-2 h-12 border-primary/20 hover:bg-primary/5"
+                    className="w-full gap-2 h-12 border-primary/20 hover:bg-primary/5 shadow-sm"
                     onClick={handleSendToReminders}
-                    disabled={isSending}
+                    disabled={isSending || !hasActiveTodos}
                 >
                     {isSending ? <Loader2 size={18} className="animate-spin" /> : <ExternalLink size={18} />}
                     <span>Åpne Påminnelser</span>
                 </Button>
             </div>
 
-            <div className="flex gap-2 p-3 bg-muted/50 rounded-radius border text-xs text-muted-foreground">
+            <div className="flex gap-2 p-3 bg-muted/50 rounded-radius border text-xs text-muted-foreground shadow-inner">
                 <Info size={14} className="shrink-0 mt-0.5" />
                 <p>
-                    Kopierer alle gjøremål for denne uken til utklippstavlen. "Åpne Påminnelser" kjører også iOS-snarveien som importerer dem.
+                    Kopierer aktive gjøremål for denne uken til utklippstavlen i ISO-format. "Åpne Påminnelser" kjører også iOS-snarveien som importerer dem.
                 </p>
             </div>
         </div>

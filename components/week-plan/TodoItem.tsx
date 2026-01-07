@@ -16,8 +16,8 @@ interface TodoItemProps {
 
 export function TodoItem({ todo, onToggle }: TodoItemProps) {
     const responsibleLabel = {
-        he: 'H',
-        she: 'U',
+        he: 'M',
+        she: 'N',
         both: 'B'
     }[todo.responsible];
 

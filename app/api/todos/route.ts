@@ -12,12 +12,13 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const year = parseInt(searchParams.get('year') || '');
         const week = parseInt(searchParams.get('week') || '');
+        const includeHidden = searchParams.get('includeHidden') === 'true' || searchParams.get('includeHidden') === '1';
 
         if (isNaN(year) || isNaN(week)) {
             return NextResponse.json({ error: 'Year and week are required' }, { status: 400 });
         }
 
-        const items = await getTodosForWeek(year, week);
+        const items = await getTodosForWeek(year, week, includeHidden);
         return NextResponse.json(items, { headers: CACHE_HEADERS });
     } catch (error) {
         console.error('GET /api/todos error:', error);

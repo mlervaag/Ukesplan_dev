@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { todoTemplates, todos, eventLog, weekPlanDays } from '@/lib/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { getDateForWeekDay, isTemplateEligibleForDate } from '@/lib/utils/date';
-import { startOfDay } from 'date-fns';
+import { startOfDay, format } from 'date-fns';
 
 export interface TodoTemplateInput {
     title: string;
@@ -221,7 +221,46 @@ export async function generateRecurringTodos(days: { id: string, dayOfWeek: numb
     return results;
 }
 
-export async function getTodosForWeek(year: number, week: number) {
+export async function setTodoHidden(id: string, hidden: boolean) {
+    return await db.transaction(async (tx) => {
+        const [updated] = await tx.update(todos)
+            .set({ hidden, updatedAt: new Date() })
+            .where(eq(todos.id, id))
+            .returning();
+
+        if (updated) {
+            await tx.insert(eventLog).values({
+                eventType: hidden ? 'todo_hidden' : 'todo_restored',
+                payload: { todoId: id, title: updated.title },
+            });
+        }
+
+        return updated;
+    });
+}
+
+export async function hideTodosForWeek(year: number, week: number) {
+    return await db.transaction(async (tx) => {
+        const weekTodos = await getTodosForWeek(year, week);
+        const ids = weekTodos.map(t => t.id);
+
+        if (ids.length === 0) return 0;
+
+        const result = await tx.update(todos)
+            .set({ hidden: true, updatedAt: new Date() })
+            .where(sql`${todos.id} IN ${ids}`)
+            .returning();
+
+        await tx.insert(eventLog).values({
+            eventType: 'week_todos_cleared',
+            payload: { year, week, count: result.length },
+        });
+
+        return result.length;
+    });
+}
+
+export async function getTodosForWeek(year: number, week: number, includeHidden: boolean = false) {
     // This is mainly for the standalone todos page and export
     // Inner join with week_plan_days and week_plans
     return await db.query.todos.findMany({
@@ -232,31 +271,50 @@ export async function getTodosForWeek(year: number, week: number) {
                 }
             }
         },
-        where: (todos, { sql }) => sql`${todos.weekPlanDayId} IN (
-            SELECT id FROM week_plan_days WHERE week_plan_id IN (
-                SELECT id FROM week_plans WHERE year = ${year} AND week = ${week}
-            )
-        )`
+        where: (todos, { and, eq, sql }) => {
+            const weekFilter = sql`${todos.weekPlanDayId} IN (
+                SELECT id FROM week_plan_days WHERE week_plan_id IN (
+                    SELECT id FROM week_plans WHERE year = ${year} AND week = ${week}
+                )
+            )`;
+            return includeHidden ? weekFilter : and(weekFilter, eq(todos.hidden, false));
+        }
     });
 }
 
 /**
  * Formats todos for clipboard export.
- * Format: [HH:MM] <title> [H|U|B] [ (ferdig)]
+ * Format: YYYY-MM-DD [HH:MM] | <title> | <Magnus|Nansy|Begge> [ (ferdig)]
  */
-export function formatTodosForClipboard(todos: any[]): string {
+export function formatTodosForClipboard(todosList: any[]): string {
     const responsibleMap: Record<string, string> = {
-        he: 'H',
-        she: 'U',
-        both: 'B'
+        he: 'Magnus',
+        she: 'Nansy',
+        both: 'Begge'
     };
 
-    return todos
+    const activeTodos = todosList.filter(t => !t.hidden);
+
+    return activeTodos
         .map(todo => {
-            const timeStr = todo.time ? `${todo.time} ` : '';
-            const respLabel = responsibleMap[todo.responsible] || '?';
+            // Get date for the day if available via weekPlanDay
+            let dateStr = '';
+            if (todo.weekPlanDay?.weekPlan) {
+                dateStr = format(
+                    getDateForWeekDay(
+                        todo.weekPlanDay.weekPlan.year,
+                        todo.weekPlanDay.weekPlan.week,
+                        todo.weekPlanDay.dayOfWeek
+                    ),
+                    'yyyy-MM-dd'
+                );
+            }
+
+            const timeStr = todo.time ? ` ${todo.time}` : '';
+            const respLabel = responsibleMap[todo.responsible] || 'Begge';
             const completedSuffix = todo.completed ? ' (ferdig)' : '';
-            return `${timeStr}${todo.title} [${respLabel}]${completedSuffix}`;
+
+            return `${dateStr}${timeStr} | ${todo.title} | ${respLabel}${completedSuffix}`;
         })
         .join('\n');
 }

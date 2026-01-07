@@ -10,7 +10,9 @@ export async function getOrCreateWeekPlan(year: number, week: number) {
             with: {
                 days: {
                     with: {
-                        todos: true,
+                        todos: {
+                            where: (todos, { eq }) => eq(todos.hidden, false)
+                        },
                     },
                 },
             },
@@ -27,7 +29,9 @@ export async function getOrCreateWeekPlan(year: number, week: number) {
                 with: {
                     days: {
                         with: {
-                            todos: true,
+                            todos: {
+                                where: (todos, { eq }) => eq(todos.hidden, false)
+                            },
                         },
                     },
                 },
@@ -59,7 +63,9 @@ export async function getOrCreateWeekPlan(year: number, week: number) {
                 with: {
                     days: {
                         with: {
-                            todos: true,
+                            todos: {
+                                where: (todos, { eq }) => eq(todos.hidden, false)
+                            },
                         },
                     },
                 },

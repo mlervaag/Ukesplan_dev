@@ -7,6 +7,7 @@ import useSWR from 'swr';
 import { getISOWeekDetails, getWeekDisplay } from '@/lib/utils/date';
 import { WeekDayGroup } from '@/components/todos/WeekDayGroup';
 import { TodoListActions } from '@/components/todos/TodoListActions';
+import { HiddenTodosSection } from '@/components/todos/HiddenTodosSection';
 import { toastBus } from '@/lib/utils/toast';
 import { formatTodosForClipboard } from '@/lib/domain/todos';
 import { Button } from '@/components/ui/Button';
@@ -26,13 +27,14 @@ export default function GjoremalPage() {
     const { year, week } = getISOWeekDetails(new Date());
     const { range: weekRangeText } = getWeekDisplay(year, week);
 
-    const { data, mutate, isLoading, error } = useSWR(`/api/todos?year=${year}&week=${week}`, fetcher);
+    const { data, mutate, isLoading, error } = useSWR(`/api/todos?year=${year}&week=${week}&includeHidden=true`, fetcher);
 
     const isUnauthorized = error?.status === 401;
 
     const onCopy = async () => {
-        if (!data || data.length === 0) {
-            toastBus.show('Ingen gjøremål å kopiere', 'info');
+        const activeTodos = data?.filter((t: any) => !t.hidden) || [];
+        if (activeTodos.length === 0) {
+            toastBus.show('Ingen aktive gjøremål å kopiere', 'info');
             return;
         }
 
@@ -43,6 +45,39 @@ export default function GjoremalPage() {
         } catch (e) {
             console.error('Copy failed:', e);
             toastBus.show('Kunne ikke kopiere. Prøv igjen.', 'error');
+        }
+    };
+
+    const onClear = async () => {
+        if (!confirm('Er du sikker på at du vil tømme listen for denne uken?')) return;
+        try {
+            const res = await fetch('/api/todos/clear-week', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ year, week }),
+            });
+            if (res.ok) {
+                mutate();
+                toastBus.show('Listen er tømt', 'success');
+            }
+        } catch (e) {
+            toastBus.show('Kunne ikke tømme listen', 'error');
+        }
+    };
+
+    const onRestore = async (id: string) => {
+        try {
+            const res = await fetch(`/api/todos/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hidden: false }),
+            });
+            if (res.ok) {
+                mutate();
+                toastBus.show('Gjøremål gjenopprettet', 'success');
+            }
+        } catch (e) {
+            toastBus.show('Kunne ikke gjenopprette', 'error');
         }
     };
 
@@ -64,18 +99,9 @@ export default function GjoremalPage() {
         );
     }
 
-    // Group todos by dayOfWeek (1-7)
-    const groupedTodos: Record<number, any[]> = {};
-    for (let i = 1; i <= 7; i++) groupedTodos[i] = [];
-
-    if (data) {
-        data.forEach((todo: any) => {
-            const day = todo.weekPlanDay.dayOfWeek;
-            groupedTodos[day].push(todo);
-        });
-    }
-
-    const hasTodos = data && data.length > 0;
+    const activeTodos = data?.filter((t: any) => !t.hidden) || [];
+    const hiddenTodos = data?.filter((t: any) => t.hidden) || [];
+    const hasTodos = (activeTodos.length > 0 || hiddenTodos.length > 0);
 
     return (
         <>
@@ -99,7 +125,7 @@ export default function GjoremalPage() {
                 ) : (
                     <div className="space-y-6">
                         {[1, 2, 3, 4, 5, 6, 7].map((day) => {
-                            const dayTodos = groupedTodos[day] || [];
+                            const dayTodos = activeTodos.filter((t: any) => t.weekPlanDay.dayOfWeek === day);
                             if (dayTodos.length === 0) return null;
 
                             return (
@@ -112,7 +138,12 @@ export default function GjoremalPage() {
                             );
                         })}
 
-                        <TodoListActions onCopy={onCopy} />
+                        <HiddenTodosSection
+                            todos={hiddenTodos}
+                            onRestore={onRestore}
+                        />
+
+                        <TodoListActions onCopy={onCopy} onClear={onClear} hasActiveTodos={activeTodos.length > 0} />
                     </div>
                 )}
             </div>

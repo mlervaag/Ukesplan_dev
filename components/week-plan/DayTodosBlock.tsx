@@ -10,6 +10,7 @@ interface Todo {
     time?: string | null;
     responsible: 'he' | 'she' | 'both';
     completed: boolean;
+    hidden: boolean;
 }
 
 interface DayTodosBlockProps {
@@ -19,8 +20,10 @@ interface DayTodosBlockProps {
 }
 
 export function DayTodosBlock({ todos, onToggleTodo, onAddTodo }: DayTodosBlockProps) {
-    const visibleTodos = todos.slice(0, 4);
-    const hasMore = todos.length > 4;
+    // Safety filter (domain logic should have already filtered these)
+    const activeTodos = todos.filter(t => !t.hidden);
+    const visibleTodos = activeTodos.slice(0, 4);
+    const hasMore = activeTodos.length > 4;
 
     return (
         <div className="w-full px-3 py-2 border-t bg-secondary/10 flex flex-col gap-1.5">

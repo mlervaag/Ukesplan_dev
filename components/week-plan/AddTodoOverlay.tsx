@@ -77,7 +77,7 @@ export function AddTodoOverlay({ isOpen, onClose, onSave, loading }: AddTodoOver
                                     responsible === 'he' ? "bg-surface shadow-sm text-primary" : "text-muted-foreground"
                                 )}
                             >
-                                Han
+                                Magnus
                             </button>
                             <button
                                 type="button"
@@ -87,7 +87,7 @@ export function AddTodoOverlay({ isOpen, onClose, onSave, loading }: AddTodoOver
                                     responsible === 'she' ? "bg-surface shadow-sm text-primary" : "text-muted-foreground"
                                 )}
                             >
-                                Henne
+                                Nansy
                             </button>
                             <button
                                 type="button"

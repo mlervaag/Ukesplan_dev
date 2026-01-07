@@ -162,7 +162,7 @@ export function TemplateForm({ isOpen, onClose, template, onSaved }: TemplateFor
                                         : "text-muted-foreground"
                                 )}
                             >
-                                {r === 'he' ? 'Han' : r === 'she' ? 'Hun' : 'Begge'}
+                                {r === 'he' ? 'Magnus' : r === 'she' ? 'Nansy' : 'Begge'}
                             </button>
                         ))}
                     </div>

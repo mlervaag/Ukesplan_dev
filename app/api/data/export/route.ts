@@ -11,10 +11,12 @@ export async function GET() {
             weekPlans: await db.query.weekPlans.findMany(),
             weekPlanDays: await db.query.weekPlanDays.findMany(),
             shoppingListItems: await db.query.shoppingListItems.findMany(),
+            todoTemplates: await db.query.todoTemplates.findMany(),
+            todos: await db.query.todos.findMany(),
             eventLog: await db.query.eventLog.findMany(),
             exportedAt: new Date().toISOString(),
             version: '4.0.0',
-            schemaVersion: 2,
+            schemaVersion: 3,
         };
 
         return new NextResponse(JSON.stringify(data, null, 2), {

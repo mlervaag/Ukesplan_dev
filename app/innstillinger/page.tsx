@@ -278,7 +278,7 @@ export default function InnstillingerPage() {
                 <div className="space-y-4">
                     <p className="text-muted-foreground">
                         Dette vil <span className="font-bold text-foreground">slette alt nåværende data</span> og erstatte det med innholdet i filen
-                        {pendingFile && <span className="italic text-foreground"> "{pendingFile.name}"</span>}.
+                        {pendingFile && <span className="italic text-foreground"> «{pendingFile.name}»</span>}.
                     </p>
                     <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-radius text-destructive text-sm font-medium">
                         Denne operasjonen kan ikke angres.

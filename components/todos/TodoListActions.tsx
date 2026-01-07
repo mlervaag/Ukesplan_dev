@@ -73,7 +73,7 @@ export function TodoListActions({ onCopy, onClear, hasActiveTodos }: TodoListAct
             <div className="flex gap-2 p-3 bg-muted/50 rounded-radius border text-xs text-muted-foreground shadow-inner">
                 <Info size={14} className="shrink-0 mt-0.5" />
                 <p>
-                    Kopierer aktive gjøremål for denne uken til utklippstavlen i ISO-format. Lag en snarvei i Snarveier som heter "Gjøremål til Påminnelser" for å importere dem direkte.
+                    Kopierer aktive gjøremål for denne uken til utklippstavlen i ISO-format. Lag en snarvei i Snarveier som heter «Gjøremål til Påminnelser» for å importere dem direkte.
                 </p>
             </div>
         </div>

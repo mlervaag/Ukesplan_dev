@@ -12,10 +12,6 @@ const CACHE_HEADERS = {
 
 export async function GET() {
     try {
-        const templates = await db.query.todoTemplates.findMany({
-            orderBy: [desc(todoTemplates.dayOfWeek)],
-        });
-        // Wait, order should be dayOfWeek ASC as per task 1.8
         const ordered = await db.query.todoTemplates.findMany({
             orderBy: (t, { asc }) => [asc(t.dayOfWeek)],
         });

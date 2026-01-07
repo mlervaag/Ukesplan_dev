@@ -109,7 +109,7 @@ export function ListActions({ onClear, onClearAndSend, onCopy }: ListActionsProp
             <div className="flex gap-2 p-3 bg-muted/50 rounded-radius border text-xs text-muted-foreground">
                 <Info size={14} className="shrink-0 mt-0.5" />
                 <p>
-                    Lag en snarvei i Snarveier som tar utklippstavlen, splitter på linjeskift, og legger til én påminnelse per linje. Denne knappen kjører snarveien.
+                    Lag en snarvei i Snarveier som heter "Middager til Påminnelser" som tar utklippstavlen, splitter på linjeskift, og legger til én påminnelse per linje. Denne knappen kjører snarveien.
                 </p>
             </div>
 

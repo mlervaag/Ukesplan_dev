@@ -48,13 +48,18 @@ export async function createTodoTemplate(input: TodoTemplateInput) {
     const dayOfWeek = input.dayOfWeek;
     if (dayOfWeek < 1 || dayOfWeek > 7) throw new Error('Ugyldig ukedag (1-7)');
 
+    const intervalWeeks = input.intervalWeeks || 1;
+    if (typeof intervalWeeks !== 'number' || intervalWeeks < 1 || intervalWeeks > 52) {
+        throw new Error('Intervall må være mellom 1 og 52 uker');
+    }
+
     return await db.transaction(async (tx) => {
         const [template] = await tx.insert(todoTemplates).values({
             title,
             dayOfWeek,
             time: input.time || null,
             responsible: input.responsible,
-            intervalWeeks: input.intervalWeeks || 1,
+            intervalWeeks,
             startDate: startOfDay(new Date()), // Recurrence starts today
             endDate: input.endDate ? new Date(input.endDate) : null,
         }).returning();
@@ -71,6 +76,11 @@ export async function createTodoTemplate(input: TodoTemplateInput) {
 export async function updateTodoTemplate(id: string, input: TodoTemplateInput) {
     const { title } = validateTodoInput(input);
 
+    const intervalWeeks = input.intervalWeeks || 1;
+    if (typeof intervalWeeks !== 'number' || intervalWeeks < 1 || intervalWeeks > 52) {
+        throw new Error('Intervall må være mellom 1 og 52 uker');
+    }
+
     return await db.transaction(async (tx) => {
         const [updated] = await tx.update(todoTemplates)
             .set({
@@ -78,7 +88,7 @@ export async function updateTodoTemplate(id: string, input: TodoTemplateInput) {
                 dayOfWeek: input.dayOfWeek,
                 time: input.time || null,
                 responsible: input.responsible,
-                intervalWeeks: input.intervalWeeks || 1,
+                intervalWeeks,
                 endDate: input.endDate ? new Date(input.endDate) : null,
                 updatedAt: new Date(),
             })
@@ -313,8 +323,9 @@ export function formatTodosForClipboard(todosList: any[]): string {
             const timeStr = todo.time ? ` ${todo.time}` : '';
             const respLabel = responsibleMap[todo.responsible] || 'Begge';
             const completedSuffix = todo.completed ? ' (ferdig)' : '';
+            const safeTitle = todo.title.replace(/\|/g, '/');
 
-            return `${dateStr}${timeStr} | ${todo.title} | ${respLabel}${completedSuffix}`;
+            return `${dateStr}${timeStr} | ${safeTitle} | ${respLabel}${completedSuffix}`;
         })
         .join('\n');
 }

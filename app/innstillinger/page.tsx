@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { toastBus } from '@/lib/utils/toast';
 import { useTheme } from '@/components/providers/ThemeProvider';
-import { Database, Download, Upload, Trash2, AlertTriangle, Loader2, Sun, Moon, Monitor } from 'lucide-react';
+import { Database, Download, Upload, Trash2, AlertTriangle, Loader2, Sun, Moon, Monitor, LogOut } from 'lucide-react';
 
 export default function InnstillingerPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -86,6 +86,19 @@ export default function InnstillingerPage() {
         }
     };
 
+    const onLogout = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/auth', { method: 'DELETE' });
+            if (res.ok) {
+                toastBus.show('Du er nå logget ut', 'success');
+                window.location.href = '/login';
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const onResetApp = async () => {
         setIsLoading(true);
         try {
@@ -104,6 +117,28 @@ export default function InnstillingerPage() {
             <PageHeader title="Innstillinger" />
 
             <div className="p-4 space-y-8 pb-24 max-w-2xl mx-auto">
+                {/* Account Section */}
+                <section className="space-y-4">
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                        <LogOut size={20} className="text-primary" />
+                        Konto
+                    </h2>
+                    <Button
+                        variant="outline"
+                        className="w-full justify-start gap-4 h-14"
+                        onClick={onLogout}
+                        disabled={isLoading}
+                    >
+                        <LogOut size={24} />
+                        <div className="text-left">
+                            <div className="font-bold">Logg ut</div>
+                            <div className="text-xs text-muted-foreground">Avslutt din økt på denne enheten</div>
+                        </div>
+                    </Button>
+                </section>
+
+                <hr />
+
                 {/* Theme Section */}
                 <section className="space-y-4">
                     <h2 className="text-lg font-bold flex items-center gap-2">

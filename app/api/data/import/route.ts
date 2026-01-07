@@ -21,7 +21,6 @@ export async function POST(request: Request) {
             }, { status: 400 });
         }
 
-        // 2. Structural & UUID Validation
         const tables = [
             { key: 'dinners', uuidFields: ['id'] },
             { key: 'ingredients', uuidFields: ['id', 'dinnerId'] },
@@ -33,6 +32,8 @@ export async function POST(request: Request) {
             { key: 'eventLog', uuidFields: ['id'] }
         ];
 
+        const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+
         for (const table of tables) {
             const rows = data[table.key];
             if (!rows && (table as any).optional) continue;
@@ -43,14 +44,62 @@ export async function POST(request: Request) {
             }
 
             for (const row of rows) {
+                // UUID Validation
                 for (const field of table.uuidFields) {
                     const val = row[field];
-                    // Optional fields like dinnerId in weekPlanDays can be null
                     if (val !== null && val !== undefined && !isValidUuid(val)) {
                         return NextResponse.json({
                             error: `Ugyldig UUID i ${table.key}.${field}: ${val}`
                         }, { status: 400 });
                     }
+                }
+
+                // Table-specific validation & normalization
+                if (table.key === 'dinners') {
+                    if (!row.name || typeof row.name !== 'string') return NextResponse.json({ error: 'Ugyldig middagsnavn' }, { status: 400 });
+                    row.name = row.name.trim().slice(0, 120);
+                    if (row.notes) row.notes = row.notes.trim().slice(0, 1000);
+                    if (row.icon) row.icon = String(row.icon).trim().slice(0, 50);
+                }
+
+                if (table.key === 'ingredients') {
+                    if (!row.name || typeof row.name !== 'string') return NextResponse.json({ error: 'Ugyldig ingrediensnavn' }, { status: 400 });
+                    row.name = row.name.trim().slice(0, 120);
+                    if (row.unit) row.unit = String(row.unit).trim().slice(0, 20);
+                    const qty = parseFloat(row.quantity);
+                    if (isNaN(qty) || qty < 0.01 || qty > 99999) return NextResponse.json({ error: 'Ugyldig mengde' }, { status: 400 });
+                }
+
+                if (table.key === 'weekPlans') {
+                    if (typeof row.year !== 'number' || row.year < 2000 || row.year > 2100) return NextResponse.json({ error: 'Ugyldig år' }, { status: 400 });
+                    if (typeof row.week !== 'number' || row.week < 1 || row.week > 53) return NextResponse.json({ error: 'Ugyldig uke' }, { status: 400 });
+                }
+
+                if (table.key === 'weekPlanDays') {
+                    if (typeof row.dayOfWeek !== 'number' || row.dayOfWeek < 1 || row.dayOfWeek > 7) return NextResponse.json({ error: 'Ugyldig ukedag' }, { status: 400 });
+                }
+
+                if (table.key === 'todoTemplates') {
+                    if (!row.title || typeof row.title !== 'string') return NextResponse.json({ error: 'Ugyldig tittel på mal' }, { status: 400 });
+                    row.title = row.title.trim().slice(0, 120);
+                    if (typeof row.dayOfWeek !== 'number' || row.dayOfWeek < 1 || row.dayOfWeek > 7) return NextResponse.json({ error: 'Ugyldig ukedag i mal' }, { status: 400 });
+                    if (row.time && !TIME_REGEX.test(row.time)) return NextResponse.json({ error: 'Ugyldig tidsformat i mal' }, { status: 400 });
+                    if (!['he', 'she', 'both'].includes(row.responsible)) return NextResponse.json({ error: 'Ugyldig ansvarlig i mal' }, { status: 400 });
+                    if (typeof row.intervalWeeks !== 'number' || row.intervalWeeks < 1 || row.intervalWeeks > 52) return NextResponse.json({ error: 'Ugyldig intervall i mal' }, { status: 400 });
+                }
+
+                if (table.key === 'todos') {
+                    if (!row.title || typeof row.title !== 'string') return NextResponse.json({ error: 'Ugyldig tittel på gjøremål' }, { status: 400 });
+                    row.title = row.title.trim().slice(0, 120);
+                    if (row.time && !TIME_REGEX.test(row.time)) return NextResponse.json({ error: 'Ugyldig tidsformat på gjøremål' }, { status: 400 });
+                    if (!['he', 'she', 'both'].includes(row.responsible)) return NextResponse.json({ error: 'Ugyldig ansvarlig på gjøremål' }, { status: 400 });
+                }
+
+                if (table.key === 'shoppingListItems') {
+                    if (!row.displayName || typeof row.displayName !== 'string') return NextResponse.json({ error: 'Ugyldig navn på vare' }, { status: 400 });
+                    row.displayName = row.displayName.trim().slice(0, 120);
+                    if (!row.normalizedKey || typeof row.normalizedKey !== 'string') row.normalizedKey = row.displayName.toLowerCase();
+                    row.normalizedKey = row.normalizedKey.trim().slice(0, 120);
                 }
             }
         }

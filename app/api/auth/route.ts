@@ -35,6 +35,8 @@ export async function POST(request: Request) {
         return response;
     }
 
+    // Brute force mitigation: fixed delay for failures
+    await new Promise(resolve => setTimeout(resolve, 1000));
     return NextResponse.json({ success: false }, { status: 401 });
 }
 

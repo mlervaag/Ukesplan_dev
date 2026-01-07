@@ -141,7 +141,18 @@ export async function updateDinner(id: string, input: DinnerInput) {
 
 export async function deleteDinner(id: string) {
     return await db.transaction(async (tx) => {
+        const dinner = await tx.query.dinners.findFirst({
+            where: eq(dinners.id, id),
+        });
+
         await tx.delete(dinners).where(eq(dinners.id, id));
         // Ingredients deleted by cascade
+
+        if (dinner) {
+            await tx.insert(eventLog).values({
+                eventType: 'dinner_deleted',
+                payload: { dinnerId: id, name: dinner.name },
+            });
+        }
     });
 }

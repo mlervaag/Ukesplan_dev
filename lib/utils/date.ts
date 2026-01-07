@@ -1,4 +1,4 @@
-import { format, startOfISOWeek, endOfISOWeek, addWeeks, subWeeks, getISOWeek, getYear } from 'date-fns';
+import { format, startOfISOWeek, endOfISOWeek, addWeeks, subWeeks, getISOWeek, getYear, addDays, startOfDay } from 'date-fns';
 import { nb } from 'date-fns/locale';
 
 export function getISOWeekDetails(date: Date) {
@@ -30,4 +30,42 @@ export function getWeekDisplay(year: number, week: number) {
 export function getDayName(dayOfWeek: number) {
     const names = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag'];
     return names[dayOfWeek - 1];
+}
+
+/**
+ * Returns a UTC Date for a specific day of a week.
+ * dayOfWeek: 1-7 (Monday-Sunday)
+ */
+export function getDateForWeekDay(year: number, week: number, dayOfWeek: number) {
+    const targetDate = getDateFromYearWeek(year, week);
+    // targetDate is already normalized to start of ISO week (Monday) by getDateFromYearWeek
+    const date = addDays(targetDate, dayOfWeek - 1);
+    return startOfDay(date); // Ensure time is 00:00:00
+}
+
+/**
+ * Checks if a template is eligible for a specific date based on
+ * intervalWeeks and date boundaries.
+ */
+export function isTemplateEligibleForDate(template: { startDate: Date, endDate?: Date | null, intervalWeeks?: number | null }, targetDate: Date) {
+    const targetTime = targetDate.getTime();
+    const startTime = startOfDay(template.startDate).getTime();
+
+    // 1. Check startDate boundary
+    if (targetTime < startTime) return false;
+
+    // 2. Check endDate boundary (inclusive)
+    if (template.endDate) {
+        const endTime = startOfDay(template.endDate).getTime();
+        if (targetTime > endTime) return false;
+    }
+
+    // 3. Check interval (every N weeks)
+    const interval = template.intervalWeeks || 1;
+    if (interval > 1) {
+        const diffInWeeks = Math.floor((targetTime - startTime) / (7 * 24 * 60 * 60 * 1000));
+        if (diffInWeeks % interval !== 0) return false;
+    }
+
+    return true;
 }

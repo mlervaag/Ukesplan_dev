@@ -27,7 +27,10 @@ export async function PATCH(
     try {
         const body = await request.json();
         await updateDinner(params.id, body);
-        return NextResponse.json({ success: true });
+        return NextResponse.json(
+            { success: true },
+            { headers: { 'Cache-Control': 'no-store, must-revalidate' } }
+        );
     } catch (error) {
         return NextResponse.json({ error: 'Failed to update dinner' }, { status: 500 });
     }
@@ -39,7 +42,10 @@ export async function DELETE(
 ) {
     try {
         await deleteDinner(params.id);
-        return NextResponse.json({ success: true });
+        return NextResponse.json(
+            { success: true },
+            { headers: { 'Cache-Control': 'no-store, must-revalidate' } }
+        );
     } catch (error) {
         return NextResponse.json({ error: 'Failed to delete dinner' }, { status: 500 });
     }

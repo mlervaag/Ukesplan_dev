@@ -120,13 +120,15 @@ export async function updateShoppingListItem(
         trimmedUpdates.quantity = Math.round(parseFloat(updates.quantity.toString())).toString();
     }
     if (updates.displayName !== undefined) {
-        trimmedUpdates.displayName = updates.displayName.trim();
-        if (!trimmedUpdates.displayName) throw new Error('Navn på vare er påkrevd');
-        if (trimmedUpdates.displayName.length > 80) throw new Error('Navn på vare kan være maks 80 tegn');
+        const name = (updates.displayName || '').trim();
+        if (!name) throw new Error('Navn på vare er påkrevd');
+        if (name.length > 80) throw new Error('Navn på vare kan være maks 80 tegn');
+        trimmedUpdates.displayName = name;
     }
     if (updates.unit !== undefined) {
-        trimmedUpdates.unit = updates.unit.trim();
-        if (trimmedUpdates.unit.length > 20) throw new Error('Enhet kan være maks 20 tegn');
+        const unit = (updates.unit || '').trim();
+        if (unit.length > 20) throw new Error('Enhet kan være maks 20 tegn');
+        trimmedUpdates.unit = unit;
     }
 
     return await db.update(shoppingListItems)

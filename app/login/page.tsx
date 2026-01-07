@@ -40,7 +40,7 @@ export default function LoginPage() {
         <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
             <div className="w-full max-w-sm space-y-6">
                 <div className="space-y-2 text-center">
-                    <h1 className="text-3xl font-bold tracking-tight">Middager</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Ukesplan</h1>
                     <p className="text-muted-foreground">Logg inn for å planlegge uken</p>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,4 +1,4 @@
-# Middager (v4.2)
+# Ukesplan (v4.2)
 
 A mobile-first dinner planning, shopping list, and recurring tasks app for families. Built with Next.js 14, deployed on Vercel.
 
@@ -79,8 +79,8 @@ Both Todos and Shopping List support deep linking to iOS Shortcuts:
 
 ```bash
 # Clone
-git clone https://github.com/your-repo/middager.git
-cd middager
+git clone https://github.com/your-repo/ukesplan.git
+cd ukesplan
 
 # Install dependencies
 npm install

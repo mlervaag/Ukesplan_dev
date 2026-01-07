@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
 
-const COOKIE_NAME = 'middager_access';
+const COOKIE_NAME = 'ukesplan_access';
 
 export async function POST(request: Request) {
     const { password } = await request.json();

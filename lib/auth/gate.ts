@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 
-const COOKIE_NAME = 'middager_access';
+const COOKIE_NAME = 'ukesplan_access';
 
 export function getAccessSecret() {
     return process.env.ACCESS_SECRET;

@@ -22,7 +22,7 @@ export async function GET() {
         return new NextResponse(JSON.stringify(data, null, 2), {
             headers: {
                 'Content-Type': 'application/json',
-                'Content-Disposition': 'attachment; filename="middager-export.json"',
+                'Content-Disposition': 'attachment; filename="ukesplan-export.json"',
                 'Cache-Control': 'no-store, must-revalidate',
             },
         });

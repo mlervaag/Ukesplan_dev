@@ -9,13 +9,13 @@ import { SWRConfig } from "swr";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Middager",
+    title: "Ukesplan",
     description: "Planlegg uken og handlelisten",
     manifest: "/manifest.json",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
-        title: "Middager",
+        title: "Ukesplan",
     },
 };
 
@@ -31,7 +31,7 @@ export const viewport: Viewport = {
 const themeScript = `
 (function() {
     try {
-        var stored = localStorage.getItem('middager-theme');
+        var stored = localStorage.getItem('ukesplan-theme');
         var theme = stored || 'system';
         var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         if (isDark) document.documentElement.classList.add('dark');

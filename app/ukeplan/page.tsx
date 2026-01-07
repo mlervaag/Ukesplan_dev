@@ -11,6 +11,7 @@ import { DinnerPicker } from '@/components/week-plan/DinnerPicker';
 import { CopyWeekModal } from '@/components/week-plan/CopyWeekModal';
 import { getISOWeekDetails } from '@/lib/utils/date';
 import { toastBus } from '@/lib/utils/toast';
+import { AddTodoOverlay } from '@/components/week-plan/AddTodoOverlay';
 import { Copy, Send, Loader2 } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -31,6 +32,8 @@ export default function UkeplanPage() {
     const [pendingDayId, setPendingDayId] = useState<string | null>(null);
     const [pendingClearDayId, setPendingClearDayId] = useState<string | null>(null);
     const [pendingSendDayId, setPendingSendDayId] = useState<string | null>(null);
+    const [isTodoOverlayOpen, setIsTodoOverlayOpen] = useState(false);
+    const [todoLoading, setTodoLoading] = useState(false);
 
     const handleWeekChange = (newYear: number, newWeek: number) => {
         // Construct a date for the new week/year
@@ -137,6 +140,48 @@ export default function UkeplanPage() {
         }
     };
 
+    const onAddTodo = async (data: { title: string; time?: string; responsible: 'he' | 'she' | 'both' }) => {
+        if (!activeDayId || todoLoading) return;
+        setTodoLoading(true);
+        try {
+            const res = await fetch('/api/todos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    weekPlanDayId: activeDayId,
+                    ...data
+                }),
+            });
+            if (res.ok) {
+                await mutate();
+                setIsTodoOverlayOpen(false);
+            } else {
+                toastBus.show('Kunne ikke lagre gjøremål', 'error');
+            }
+        } catch (error) {
+            toastBus.show('Noe gikk galt', 'error');
+        } finally {
+            setTodoLoading(false);
+        }
+    };
+
+    const onToggleTodo = async (todoId: string, currentStatus: boolean) => {
+        try {
+            const res = await fetch(`/api/todos/${todoId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed: !currentStatus }),
+            });
+            if (res.ok) {
+                await mutate();
+            } else {
+                toastBus.show('Kunne ikke oppdatere', 'error');
+            }
+        } catch (error) {
+            toastBus.show('Nettverksfeil', 'error');
+        }
+    };
+
     return (
         <>
             <PageHeader title="Ukeplan">
@@ -179,10 +224,13 @@ export default function UkeplanPage() {
                             dinnerId={day.dinnerId}
                             dinnerName={day.dinnerNameSnapshot}
                             dinnerIcon={day.dinnerIconSnapshot}
+                            todos={day.todos}
                             isPending={pendingDayId === day.id || pendingClearDayId === day.id || pendingSendDayId === day.id}
                             onAssign={() => { setActiveDayId(day.id); setIsPickerOpen(true); }}
                             onClear={() => onClearDay(day.id)}
                             onSend={() => onSendDay(day.id)}
+                            onToggleTodo={onToggleTodo}
+                            onAddTodo={() => { setActiveDayId(day.id); setIsTodoOverlayOpen(true); }}
                         />
                     ))
                 )}
@@ -206,6 +254,13 @@ export default function UkeplanPage() {
                     loading={actionLoading}
                 />
             </Modal>
+
+            <AddTodoOverlay
+                isOpen={isTodoOverlayOpen}
+                onClose={() => setIsTodoOverlayOpen(false)}
+                onSave={onAddTodo}
+                loading={todoLoading}
+            />
         </>
     );
 }

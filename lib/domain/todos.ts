@@ -239,3 +239,24 @@ export async function getTodosForWeek(year: number, week: number) {
         )`
     });
 }
+
+/**
+ * Formats todos for clipboard export.
+ * Format: [HH:MM] <title> [H|U|B] [ (ferdig)]
+ */
+export function formatTodosForClipboard(todos: any[]): string {
+    const responsibleMap: Record<string, string> = {
+        he: 'H',
+        she: 'U',
+        both: 'B'
+    };
+
+    return todos
+        .map(todo => {
+            const timeStr = todo.time ? `${todo.time} ` : '';
+            const respLabel = responsibleMap[todo.responsible] || '?';
+            const completedSuffix = todo.completed ? ' (ferdig)' : '';
+            return `${timeStr}${todo.title} [${respLabel}]${completedSuffix}`;
+        })
+        .join('\n');
+}

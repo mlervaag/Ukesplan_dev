@@ -2,13 +2,14 @@
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { CheckSquare, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckSquare, Loader2 } from 'lucide-react';
 import useSWR from 'swr';
-import { useState } from 'react';
 import { getISOWeekDetails, getWeekDisplay } from '@/lib/utils/date';
 import { WeekDayGroup } from '@/components/todos/WeekDayGroup';
-import { Button } from '@/components/ui/Button';
+import { TodoListActions } from '@/components/todos/TodoListActions';
 import { toastBus } from '@/lib/utils/toast';
+import { formatTodosForClipboard } from '@/lib/domain/todos';
+import { Button } from '@/components/ui/Button';
 
 const fetcher = async (url: string) => {
     const res = await fetch(url);
@@ -22,18 +23,27 @@ const fetcher = async (url: string) => {
 };
 
 export default function GjoremalPage() {
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const { year, week } = getISOWeekDetails(currentDate);
+    const { year, week } = getISOWeekDetails(new Date());
     const { range: weekRangeText } = getWeekDisplay(year, week);
 
     const { data, mutate, isLoading, error } = useSWR(`/api/todos?year=${year}&week=${week}`, fetcher);
 
     const isUnauthorized = error?.status === 401;
 
-    const navigateWeek = (offset: number) => {
-        const nextDate = new Date(currentDate);
-        nextDate.setDate(nextDate.getDate() + (offset * 7));
-        setCurrentDate(nextDate);
+    const onCopy = async () => {
+        if (!data || data.length === 0) {
+            toastBus.show('Ingen gjøremål å kopiere', 'info');
+            return;
+        }
+
+        try {
+            const text = formatTodosForClipboard(data);
+            await navigator.clipboard.writeText(text);
+            toastBus.show('Kopiert til utklippstavlen', 'success');
+        } catch (e) {
+            console.error('Copy failed:', e);
+            toastBus.show('Kunne ikke kopiere. Prøv igjen.', 'error');
+        }
     };
 
     if (error) {
@@ -70,22 +80,8 @@ export default function GjoremalPage() {
     return (
         <>
             <PageHeader title="Gjøremål">
-                <div className="flex items-center space-x-2 mt-2">
-                    <button
-                        onClick={() => navigateWeek(-1)}
-                        className="p-1 hover:bg-muted rounded-full transition-colors"
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <span className="text-sm font-medium min-w-[140px] text-center">
-                        {weekRangeText}
-                    </span>
-                    <button
-                        onClick={() => navigateWeek(1)}
-                        className="p-1 hover:bg-muted rounded-full transition-colors"
-                    >
-                        <ChevronRight size={20} />
-                    </button>
+                <div className="mt-1 text-sm font-medium text-muted-foreground">
+                    {weekRangeText}
                 </div>
             </PageHeader>
 
@@ -101,17 +97,22 @@ export default function GjoremalPage() {
                         description="Planlegg uken for å se faste gjøremål, eller legg til nye i ukeplanen."
                     />
                 ) : (
-                    <div className="space-y-8">
-                        {[1, 2, 3, 4, 5, 6, 7].map(day => (
-                            groupedTodos[day].length > 0 && (
+                    <div className="space-y-6">
+                        {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+                            const dayTodos = groupedTodos[day] || [];
+                            if (dayTodos.length === 0) return null;
+
+                            return (
                                 <WeekDayGroup
                                     key={day}
                                     dayOfWeek={day}
-                                    todos={groupedTodos[day]}
+                                    todos={dayTodos}
                                     onUpdate={() => mutate()}
                                 />
-                            )
-                        ))}
+                            );
+                        })}
+
+                        <TodoListActions onCopy={onCopy} />
                     </div>
                 )}
             </div>

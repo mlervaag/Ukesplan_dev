@@ -5,6 +5,7 @@ import { MoreVertical, Plus, Send, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { getDayName } from '@/lib/utils/date';
 import { clsx } from 'clsx';
+import { DayTodosBlock } from './DayTodosBlock';
 
 interface DayCellProps {
     dayId: string;
@@ -12,13 +13,29 @@ interface DayCellProps {
     dinnerId?: string | null;
     dinnerName?: string | null;
     dinnerIcon?: string | null;
+    todos?: any[];
     isPending?: boolean;
     onAssign: () => void;
     onClear: () => void;
     onSend: () => void;
+    onToggleTodo: (todoId: string, currentStatus: boolean) => void;
+    onAddTodo: () => void;
 }
 
-export function DayCell({ dayId, dayOfWeek, dinnerId, dinnerName, dinnerIcon, isPending, onAssign, onClear, onSend }: DayCellProps) {
+export function DayCell({
+    dayId,
+    dayOfWeek,
+    dinnerId,
+    dinnerName,
+    dinnerIcon,
+    todos = [],
+    isPending,
+    onAssign,
+    onClear,
+    onSend,
+    onToggleTodo,
+    onAddTodo
+}: DayCellProps) {
     const [showMenu, setShowMenu] = useState(false);
 
     return (
@@ -86,6 +103,12 @@ export function DayCell({ dayId, dayOfWeek, dinnerId, dinnerName, dinnerIcon, is
                     </div>
                 )}
             </div>
+
+            <DayTodosBlock
+                todos={todos}
+                onToggleTodo={onToggleTodo}
+                onAddTodo={onAddTodo}
+            />
 
             {/* AI Suggestion Placeholder (Hidden) */}
             <div
